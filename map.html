@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        
+    </style>
+</head>
+<body>
+    
+    <canvas id="carte" width="600" height="400"></canvas>
+    <div id="legend"></div>
+    <script type="module">
+        const carteCanvas = document.getElementById("carte");
+        const ctx = carteCanvas.getContext("2d");
+
+        // Charger le fichier de données
+        const data = await fetch("1_victoria_lake.txt").then(r => r.text());
+        
+
+        // Définir la largeur et la hauteur de la carte
+        const rows = data.split('\r\n');
+        const nbClients = parseInt(rows[0]);
+        const clients = rows.slice(1, nbClients + 1);
+        const boxClients = []
+        for(let i = 0; i < clients.length; i++) {
+            clients[i] = clients[i].split(' ');
+            boxClients.push(clients[i][0] + clients[i][1]);
+        }
+
+        console.log(boxClients)
+        let map = rows.slice(nbClients + 1);
+
+        const nbLignes = map.length;
+        const nbColonnes = map[0].length;
+
+        console.log(map)
+        map = map.join('')
+
+
+        // Parcourir chaque ligne et chaque caractère
+        for (let i = 0; i < nbLignes; i++) {
+            for (let j = 0; j < nbColonnes; j++) {
+                const caractere = map[i * nbColonnes + j];
+                console.log(caractere)
+                const styleCase = "case " + getStyleCase(caractere);
+
+                // Dessiner la case
+                if(boxClients.includes(''+j+i)) {
+                    ctx.fillStyle = "red";
+                } else {
+                    ctx.fillStyle = getCouleurCase(caractere);
+                }
+                
+                ctx.fillRect(j * 20, i * 20, 20, 20);
+                ctx.strokeRect(j * 20, i * 20, 20, 20);
+            }
+        }
+
+        // Fonction pour obtenir le style de la case
+        function getStyleCase(caractere) {
+            let type = "";
+            switch (caractere) {
+                case "#": type =  "Montagne"; break;
+                case "~": type = "Eau"; break;
+                case "*": type = "Embouteillage"; break;
+                case "+": type = "Saleté"; break;
+                case "X": type = "Passage à niveau"; break;
+                case "_": type = "Terrain standard"; break;
+                case "H": type = "Autoroute"; break;
+                case "T": type = "Chemin de fer"; break;
+            }
+
+            return type;
+        }
+
+        // Fonction pour obtenir la couleur de la case
+        function getCouleurCase(caractere) {
+            const costs = {
+                '#': undefined,
+                '~': 800,
+                '*': 200,
+                '+': 150,
+                'X': 120,
+                '_': 100,
+                'H': 70,
+                'T': 50
+            };
+            
+            if(caractere == '#') return 'black';
+            return `hsl(150, 70%, ${(costs[caractere] / 800) * 100}%)`;
+        }
+
+        const costs = {
+                '#': undefined,
+                '~': 800,
+                '*': 200,
+                '+': 150,
+                'X': 120,
+                '_': 100,
+                'H': 70,
+                'T': 50
+        };
+        
+        let html = '';
+        for(let cost in costs) {
+            html += `
+                <div style="display: flex; align-items:center;">
+                    <div style="border: 2px solid gray; margin: 5px; width: 20px; height: 20px; background-color: ${getCouleurCase(cost)}"></div>
+                    <div>${getStyleCase(cost)} (${costs[cost]})</div>
+                </div>
+            `
+        }
+
+        document.querySelector('#legend').innerHTML = html;
+
+    </script>
+</body>
+</html>
